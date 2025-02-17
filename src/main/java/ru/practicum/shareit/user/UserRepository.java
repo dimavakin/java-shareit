@@ -16,4 +16,5 @@ public interface UserRepository {
     User delete(Long id);
 
     boolean checkUserExists(Long id);
-} 
+
+}
