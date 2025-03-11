@@ -12,33 +12,39 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.shareit.user.User;
 
+import java.time.LocalDateTime;
+
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(of = {"text", "item", "user"})
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "items")
-public class Item {
+@Table(name = "comments", schema = "public")
+public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
     @Column
-    String name;
-
-    @Column
-    String description;
-
-    @Column(name = "is_available")
-    Boolean available;
+    String text;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
+    @JoinColumn(name = "item_id", nullable = false)
     @ToString.Exclude
-    User owner;
+    Item item;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    @ToString.Exclude
+    User user;
+
+    @Column
+    LocalDateTime created;
 }

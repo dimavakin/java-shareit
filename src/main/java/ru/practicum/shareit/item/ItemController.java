@@ -25,7 +25,7 @@ public class ItemController {
     private final ItemService itemService;
 
     @GetMapping
-    public List<ItemDto> get(@RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<ItemWithBookingsCommentsDto> get(@RequestHeader("X-Sharer-User-Id") long userId) {
         return itemService.getItems(userId);
     }
 
@@ -45,12 +45,12 @@ public class ItemController {
     @PatchMapping("/{itemId}")
     public ItemDto pathItem(@RequestHeader("X-Sharer-User-Id") Long userId,
                             @PathVariable(name = "itemId") Long itemId, @RequestBody ItemDto itemDto) {
-        return itemService.patchItem(userId, itemId, itemDto);
+        return itemService.updateItem(userId, itemId, itemDto);
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto findItemById(@PathVariable(name = "itemId") Long itemId) {
-        return itemService.findItemByID(itemId);
+    public ItemWithCommentsDto findItemById(@PathVariable(name = "itemId") Long itemId) {
+        return itemService.findByID(itemId);
     }
 
     @GetMapping("/search")
@@ -59,5 +59,12 @@ public class ItemController {
             return List.of();
         }
         return itemService.findItemByText(text);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto setComment(@RequestBody CommentDto commentDto,
+                                 @PathVariable(name = "itemId") Long itemId,
+                                 @RequestHeader("X-Sharer-User-Id") Long userId) {
+        return itemService.addNewComment(commentDto, itemId, userId);
     }
 }
