@@ -10,6 +10,9 @@ import ru.practicum.shareit.user.UserDto;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BookingMapper {
     public static Booking mapToBookingFromRequestDto(BookingRequestDto bookingRequestDto, User booker, Item item) {
+        if (bookingRequestDto == null || booker == null || item == null) {
+            throw new IllegalArgumentException("BookingRequestDto, User, и Item не могут быть null");
+        }
         Booking booking = new Booking();
         booking.setStart(bookingRequestDto.getStart());
         booking.setEnd(bookingRequestDto.getEnd());
@@ -20,6 +23,9 @@ public class BookingMapper {
     }
 
     public static BookingDto mapToBookingDto(Booking booking) {
+        if (booking == null) {
+            throw new IllegalArgumentException("Booking не может быть null");
+        }
         BookingDto dto = new BookingDto();
         dto.setId(booking.getId());
         dto.setStart(booking.getStart());
@@ -38,5 +44,4 @@ public class BookingMapper {
         ));
         return dto;
     }
-
 }

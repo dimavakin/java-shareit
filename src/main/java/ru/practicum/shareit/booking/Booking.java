@@ -11,10 +11,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.user.User;
 
@@ -26,6 +28,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "bookings")
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
