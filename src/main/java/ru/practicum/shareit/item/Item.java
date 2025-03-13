@@ -34,7 +34,7 @@ public class Item {
     @Column
     String description;
 
-    @Column(name = "is_available")
+    @Column(name = "is_available", nullable = false)
     Boolean available;
 
     @ManyToOne(fetch = FetchType.LAZY)
