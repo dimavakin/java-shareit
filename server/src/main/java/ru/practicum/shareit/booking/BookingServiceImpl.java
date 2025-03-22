@@ -41,6 +41,11 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto approveBooking(Long bookingId, boolean approved, Long ownerId) {
         Booking booking = bookingRepository.findByIdWithBookerAndItem(bookingId)
                 .orElseThrow(() -> new NotFoundException("bookingId не найден: " + bookingId));
+
+        if (booking.getStatus() != Status.WAITING) {
+            throw new ValidationException("Бронирование уже подтверждено или отклонено");
+        }
+
         if (booking.getItem().getOwner().getId().equals(ownerId)) {
             if (approved) {
                 booking.setStatus(Status.APPROVED);
@@ -119,6 +124,4 @@ public class BookingServiceImpl implements BookingService {
                 .map(BookingMapper::mapToBookingDto)
                 .collect(Collectors.toList());
     }
-
-
 }

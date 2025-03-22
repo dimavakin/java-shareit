@@ -102,4 +102,5 @@ public class ItemRequestServiceImplTest {
         assertThat(exception.getMessage()).isEqualTo("Пользователь с id = 2 не найден");
         verify(userRepository, times(1)).findById(2L);
     }
+
 }

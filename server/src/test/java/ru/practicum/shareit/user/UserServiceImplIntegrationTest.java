@@ -83,4 +83,5 @@ public class UserServiceImplIntegrationTest extends BaseSpringBootTest {
     public void testDeleteWhenUserDoesNotExistThenThrowNotFoundException() {
         assertThrows(NotFoundException.class, () -> userService.delete(999L));
     }
+
 }

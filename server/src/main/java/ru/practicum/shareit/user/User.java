@@ -33,9 +33,4 @@ public class User {
     @Column
     @Size(max = 512)
     String email;
-
-    public User(String name, String email) {
-        this.name = name;
-        this.email = email;
-    }
 }

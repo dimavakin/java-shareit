@@ -72,6 +72,12 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     @Override
     public void deleteItem(Long userId, long itemId) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Вещь с id=" + itemId + " не найдена"));
+
+        if (!item.getOwner().getId().equals(userId)) {
+            throw new NotFoundException("Пользователь с id=" + userId + " не является владельцем вещи с id=" + itemId);
+        }
         itemRepository.deleteByOwnerIdAndId(userId, itemId);
     }
 

@@ -102,7 +102,7 @@ public class BookingServiceImplTest {
         when(bookingRepository.findByIdWithBookerAndItem(booking.getId())).thenReturn(Optional.of(booking));
         assertThatThrownBy(() -> bookingService.approveBooking(booking.getId(), true, 999L))
                 .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("не является владельцем вещи");
+                .hasMessageContaining("Бронирование уже подтверждено или отклонено");
     }
 
     @Test
@@ -205,5 +205,92 @@ public class BookingServiceImplTest {
         when(bookingRepository.findByItemOwnerId(anyLong())).thenReturn(Collections.emptyList());
         List<BookingDto> bookings = bookingService.getBookingsForOwner(BookingState.ALL.name(), itemOwner.getId());
         assertThat(bookings).isEmpty();
+    }
+
+    @Test
+    void testCreateBookingWhenItemIsNotAvailableThenThrowException() {
+        item.setAvailable(false);
+        when(userRepository.findById(booker.getId())).thenReturn(Optional.of(booker));
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.of(item));
+
+        assertThatThrownBy(() -> bookingService.addBooking(bookingRequestDto, booker.getId()))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Предмет недоступен для бронирования");
+    }
+
+    @Test
+    void testApproveBookingWhenStatusIsNotWaitingThenThrowException() {
+        booking.setStatus(Status.APPROVED);
+        when(bookingRepository.findByIdWithBookerAndItem(booking.getId())).thenReturn(Optional.of(booking));
+
+        assertThatThrownBy(() -> bookingService.approveBooking(booking.getId(), true, item.getOwner().getId()))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Бронирование уже подтверждено или отклонено");
+    }
+
+    @Test
+    void testApproveBookingWhenStatusIsWaitingThenUpdateStatus() {
+        booking.setStatus(Status.WAITING);
+        when(bookingRepository.findByIdWithBookerAndItem(booking.getId())).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
+
+        BookingDto result = bookingService.approveBooking(booking.getId(), true, item.getOwner().getId());
+        assertThat(result.getStatus()).isEqualTo(Status.APPROVED);
+    }
+
+    @Test
+    void testFindOwnerBookingsForCurrentState() {
+        LocalDateTime now = LocalDateTime.now();
+        Booking currentBooking = new Booking(2L, now.minusHours(1), now.plusHours(1), item, booker, Status.APPROVED);
+        when(userRepository.findById(itemOwner.getId())).thenReturn(Optional.of(itemOwner));
+        when(itemRepository.findByOwnerId(itemOwner.getId())).thenReturn(List.of(item));
+        when(bookingRepository.findByItemIdInAndStartBeforeAndEndAfterOrderByStartDesc(anyList(), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(currentBooking));
+
+        List<BookingDto> bookings = bookingService.getBookingsForOwner(BookingState.CURRENT.name(), itemOwner.getId());
+        assertThat(bookings).hasSize(1);
+        assertThat(bookings.get(0).getStatus()).isEqualTo(Status.APPROVED);
+    }
+
+    @Test
+    void testFindOwnerBookingsForPastState() {
+        LocalDateTime past = LocalDateTime.now().minusDays(2);
+        Booking pastBooking = new Booking(3L, past.minusDays(1), past, item, booker, Status.APPROVED);
+        when(userRepository.findById(itemOwner.getId())).thenReturn(Optional.of(itemOwner));
+        when(itemRepository.findByOwnerId(itemOwner.getId())).thenReturn(List.of(item));
+        when(bookingRepository.findByItemIdInAndEndBeforeOrderByStartDesc(anyList(), any(LocalDateTime.class)))
+                .thenReturn(List.of(pastBooking));
+
+        List<BookingDto> bookings = bookingService.getBookingsForOwner(BookingState.PAST.name(), itemOwner.getId());
+        assertThat(bookings).hasSize(1);
+        assertThat(bookings.get(0).getEnd()).isBefore(LocalDateTime.now());
+    }
+
+    @Test
+    void testFindOwnerBookingsForFutureState() {
+        LocalDateTime future = LocalDateTime.now().plusDays(2);
+        Booking futureBooking = new Booking(4L, future, future.plusDays(1), item, booker, Status.WAITING);
+        when(userRepository.findById(itemOwner.getId())).thenReturn(Optional.of(itemOwner));
+        when(itemRepository.findByOwnerId(itemOwner.getId())).thenReturn(List.of(item));
+        when(bookingRepository.findByItemIdInAndStartAfterOrderByStartDesc(anyList(), any(LocalDateTime.class)))
+                .thenReturn(List.of(futureBooking));
+
+        List<BookingDto> bookings = bookingService.getBookingsForOwner(BookingState.FUTURE.name(), itemOwner.getId());
+        assertThat(bookings).hasSize(1);
+        assertThat(bookings.get(0).getStart()).isAfter(LocalDateTime.now());
+    }
+
+    @Test
+    void testFindOwnerBookingsForWaitingState() {
+        Booking waitingBooking = new Booking(5L, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2),
+                item, booker, Status.WAITING);
+        when(userRepository.findById(itemOwner.getId())).thenReturn(Optional.of(itemOwner));
+        when(itemRepository.findByOwnerId(itemOwner.getId())).thenReturn(List.of(item));
+        when(bookingRepository.findByItemIdInAndStatusOrderByStartDesc(anyList(), eq(Status.WAITING)))
+                .thenReturn(List.of(waitingBooking));
+
+        List<BookingDto> bookings = bookingService.getBookingsForOwner(BookingState.WAITING.name(), itemOwner.getId());
+        assertThat(bookings).hasSize(1);
+        assertThat(bookings.get(0).getStatus()).isEqualTo(Status.WAITING);
     }
 }

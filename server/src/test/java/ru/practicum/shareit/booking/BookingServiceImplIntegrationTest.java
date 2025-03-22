@@ -105,4 +105,43 @@ public class BookingServiceImplIntegrationTest extends BaseSpringBootTest {
         List<BookingDto> ownerBookings = bookingService.getBookingsForOwner(BookingState.ALL.name(), itemOwner.getId());
         assertThat(ownerBookings).isEmpty();
     }
+
+    @Test
+    public void testCreateBookingWhenUserNotFoundThenThrowNotFoundException() {
+        Long nonExistentUserId = 999L;
+        assertThrows(NotFoundException.class, () -> bookingService.addBooking(bookingRequestDto, nonExistentUserId));
+    }
+
+    @Test
+    public void testCreateBookingWhenItemNotFoundThenThrowNotFoundException() {
+        bookingRequestDto.setItemId(999L);
+        assertThrows(NotFoundException.class, () -> bookingService.addBooking(bookingRequestDto, booker.getId()));
+    }
+
+    @Test
+    public void testApproveBookingWhenStatusIsNotWaitingThenThrowValidationException() {
+        BookingDto createdBooking = bookingService.addBooking(bookingRequestDto, booker.getId());
+        bookingService.approveBooking(createdBooking.getId(), true, itemOwner.getId());
+
+        assertThrows(ValidationException.class, () -> bookingService.approveBooking(createdBooking.getId(), true, itemOwner.getId()));
+    }
+
+    @Test
+    public void testFindBookingWhenUserIsNotOwnerOrBookerThenThrowValidationException() {
+        BookingDto createdBooking = bookingService.addBooking(bookingRequestDto, booker.getId());
+        User anotherUser = new User(null, "Another User", "another@example.com");
+        userRepository.save(anotherUser);
+
+        assertThrows(ValidationException.class, () -> bookingService.getBooking(createdBooking.getId(), anotherUser.getId()));
+    }
+
+    @Test
+    public void testFindBookerBookingsForCurrentState() {
+        bookingRequestDto.setStart(LocalDateTime.now().minusDays(1));
+        bookingRequestDto.setEnd(LocalDateTime.now().plusDays(1));
+        bookingService.addBooking(bookingRequestDto, booker.getId());
+
+        List<BookingDto> bookings = bookingService.getBookingForUser(BookingState.CURRENT.name(), booker.getId());
+        assertThat(bookings).isNotEmpty();
+    }
 }

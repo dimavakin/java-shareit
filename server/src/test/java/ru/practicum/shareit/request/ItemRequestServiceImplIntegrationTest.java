@@ -58,4 +58,31 @@ public class ItemRequestServiceImplIntegrationTest extends BaseSpringBootTest {
         List<ItemRequestDto> requests = itemRequestService.findAll();
         assertThat(requests).hasSize(1);
     }
+
+    @Test
+    public void testCreateItemRequestWhenUserDoesNotExistThenThrowNotFoundException() {
+        Long nonExistentUserId = 999L;
+        assertThrows(NotFoundException.class, () -> itemRequestService.createItemRequest(itemRequestCreateDto, nonExistentUserId));
+    }
+
+    @Test
+    public void testFindByRequestorIdWhenUserDoesNotExistThenThrowNotFoundException() {
+        Long nonExistentUserId = 999L;
+        assertThrows(NotFoundException.class, () -> itemRequestService.findByRequestorId(nonExistentUserId));
+    }
+
+    @Test
+    public void testFindByRequestorIdWhenNoRequestsExistThenReturnEmptyList() {
+        User anotherUser = new User(null, "Another User", "another@example.com");
+        userRepository.save(anotherUser);
+
+        List<ItemRequestDto> requests = itemRequestService.findByRequestorId(anotherUser.getId());
+        assertThat(requests).isEmpty();
+    }
+
+    @Test
+    public void testFindAllWhenNoRequestsExistThenReturnEmptyList() {
+        List<ItemRequestDto> requests = itemRequestService.findAll();
+        assertThat(requests).isEmpty();
+    }
 }

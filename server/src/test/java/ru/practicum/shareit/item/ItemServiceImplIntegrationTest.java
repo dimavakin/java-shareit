@@ -109,4 +109,31 @@ public class ItemServiceImplIntegrationTest extends BaseSpringBootTest {
         assertThat(createdComment).isNotNull();
         assertThat(createdComment.getText()).isEqualTo(commentDto.getText());
     }
+
+    @Test
+    public void testFindAllFromUserWhenNoItemsExistThenReturnEmptyList() {
+        User anotherUser = new User();
+        anotherUser.setName("Another User");
+        anotherUser.setEmail("anotheruser@example.com");
+        userRepository.save(anotherUser);
+
+        List<ItemWithBookingsCommentsDto> items = itemService.getItems(anotherUser.getId());
+        assertThat(items).isEmpty();
+    }
+
+    @Test
+    public void testCreateWhenUserDoesNotExistThenThrowNotFoundException() {
+        Long nonExistentUserId = 999L;
+        assertThrows(NotFoundException.class, () -> itemService.addNewItem(nonExistentUserId, itemCreateDto));
+    }
+
+    @Test
+    public void testDeleteWhenUserIsNotOwnerThenThrowNotFoundException() {
+        User anotherUser = new User();
+        anotherUser.setName("Another User");
+        anotherUser.setEmail("anotheruser@example.com");
+        userRepository.save(anotherUser);
+
+        assertThrows(NotFoundException.class, () -> itemService.deleteItem(anotherUser.getId(), item.getId()));
+    }
 }

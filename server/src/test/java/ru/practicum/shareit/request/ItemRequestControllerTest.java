@@ -11,6 +11,7 @@ import ru.practicum.shareit.base.BaseWebMvcTest;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 class ItemRequestControllerTest extends BaseWebMvcTest {
@@ -65,5 +66,16 @@ class ItemRequestControllerTest extends BaseWebMvcTest {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(itemRequestDto.getId()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].description").value(itemRequestDto.getDescription()));
+    }
+
+    @Test
+    public void testFindAllItemRequestsWhenNoRequestsExistThenReturnEmptyList() throws Exception {
+        BDDMockito.given(itemRequestService.findAll())
+                .willReturn(Collections.emptyList());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/requests/all")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$").isEmpty());
     }
 }

@@ -146,4 +146,37 @@ public class ItemServiceImplTest {
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("Пользователь c id = 1 не был или не является арендатором вещи c id = 1");
     }
+
+    @Test
+    void testUpdateWhenItemDoesNotExistThenThrowNotFoundException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(itemRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> itemService.updateItem(1L, 1L, itemDto))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Вещь с id=1 не найдена");
+    }
+
+    @Test
+    void testCreateWhenUserDoesNotExistThenThrowNotFoundException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> itemService.addNewItem(1L, itemCreateDto))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Пользователь не найден");
+    }
+
+    @Test
+    void testFindAllFromUserWhenNoItemsExistThenReturnEmptyList() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(itemRepository.findByOwnerId(1L)).thenReturn(List.of());
+        when(bookingRepository.findByItemOwnerId(1L)).thenReturn(List.of());
+        when(commentRepository.findCommentsByUserId(1L)).thenReturn(List.of());
+
+        List<ItemWithBookingsCommentsDto> result = itemService.getItems(1L);
+        assertThat(result).isEmpty();
+        verify(itemRepository, times(1)).findByOwnerId(1L);
+        verify(bookingRepository, times(1)).findByItemOwnerId(1L);
+        verify(commentRepository, times(1)).findCommentsByUserId(1L);
+    }
 }

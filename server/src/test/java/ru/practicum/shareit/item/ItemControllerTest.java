@@ -8,11 +8,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.practicum.shareit.base.BaseWebMvcTest;
+import ru.practicum.shareit.exception.NotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-
 
 class ItemControllerTest extends BaseWebMvcTest {
     private ItemWithBookingsCommentsDto itemWithBookingsCommentsDto;
@@ -103,4 +103,35 @@ class ItemControllerTest extends BaseWebMvcTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.text").value(commentDto.getText()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.authorName").value(commentDto.getAuthorName()));
     }
+
+    @Test
+    public void testFindAllFromUserWhenNoItemsExistThenReturnEmptyList() throws Exception {
+        BDDMockito.given(itemService.getItems(1L)).willReturn(List.of());
+        mockMvc.perform(MockMvcRequestBuilders.get("/items")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
+                .andExpect(MockMvcResultMatchers.jsonPath("$").isEmpty());
+    }
+
+    @Test
+    public void testFindItemWhenItemDoesNotExistThenThrowNotFoundException() throws Exception {
+        BDDMockito.given(itemService.findById(1L)).willThrow(new NotFoundException("Вещь не найдена"));
+        mockMvc.perform(MockMvcRequestBuilders.get("/items/{id}", 1L)
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.error").value("Не найдено"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Вещь не найдена"));
+    }
+
+    @Test
+    public void testFindItemByTextWhenTextIsBlankThenReturnEmptyList() throws Exception {
+        BDDMockito.given(itemService.findItemByText("")).willReturn(List.of());
+        mockMvc.perform(MockMvcRequestBuilders.get("/items/search")
+                        .param("text", ""))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
+                .andExpect(MockMvcResultMatchers.jsonPath("$").isEmpty());
+    }
+
 }

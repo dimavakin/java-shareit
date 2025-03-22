@@ -37,5 +37,4 @@ public class ItemRequestController {
     public ItemRequestDto getOne(@PathVariable Long requestId) {
         return itemRequestService.findById(requestId);
     }
-
 }
