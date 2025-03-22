@@ -73,7 +73,7 @@ public class BookingServiceImpl implements BookingService {
         BookingState bookingState = BookingState.fromString(state);
         LocalDateTime now = LocalDateTime.now();
         List<Booking> bookings;
-        if (state == BookingState.ALL.name()) {
+        if (state.equals(BookingState.ALL.name())) {
             bookings = bookingRepository.findByBookerIdWithDetails(userId);
         } else {
             bookings = switch (bookingState) {
@@ -101,7 +101,7 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> bookings;
         List<Item> items = itemRepository.findByOwnerId(ownerId);
         List<Long> itemIds = items.stream().map(Item::getId).collect(Collectors.toList());
-        if (state == BookingState.ALL.name()) {
+        if (state.equals(BookingState.ALL.name())) {
             bookings = bookingRepository.findByItemOwnerId(ownerId);
         } else {
             bookings = switch (bookingState) {
