@@ -16,6 +16,6 @@ public class UserDto {
     @NotBlank(message = "Имя не может быть пустым")
     String name;
     @Email(message = "Электронная почта не может быть пустой и должна содержать символ @")
-    @NotNull
+    @NotNull(message = "Email не должен быть null")
     String email;
 }
