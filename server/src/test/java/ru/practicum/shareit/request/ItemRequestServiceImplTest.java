@@ -77,9 +77,12 @@ public class ItemRequestServiceImplTest {
     void testFindByRequestorIdWhenRequestsExistThenReturnItemRequestDtos() {
         List<ItemRequest> requests = List.of(itemRequest);
         List<ItemRequestDto> requestDtos = List.of(itemRequestDto);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(requestor));
+
+        when(userRepository.existsById(1L)).thenReturn(true);
         when(itemRequestRepository.findByRequestorIdOrderByCreatedDesc(1L)).thenReturn(requests);
+
         List<ItemRequestDto> result = itemRequestService.findByRequestorId(1L);
+
         assertThat(result).isEqualTo(requestDtos);
         verify(userRepository, times(1)).existsById(1L);
         verify(itemRequestRepository, times(1)).findByRequestorIdOrderByCreatedDesc(1L);
