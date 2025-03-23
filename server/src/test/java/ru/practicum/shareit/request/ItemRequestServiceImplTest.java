@@ -41,7 +41,7 @@ public class ItemRequestServiceImplTest {
         requestor = new User(1L, "John Doe", "john.doe@example.com");
         itemRequestCreateDto = new ItemRequestCreateDto("Need a book", LocalDateTime.now());
         itemRequestDto = new ItemRequestDto(1L, "Need a book", LocalDateTime.now(), 1L, null);
-        itemRequest = ItemRequestMapper.mapToItemRequestFromCreateDto(itemRequestCreateDto, requestor);
+        itemRequest = ItemRequestMapper.toItemRequestFromCreateDto(itemRequestCreateDto, requestor);
         itemRequest.setId(1L);
         itemRequest.setCreated(itemRequestDto.getCreated());
     }

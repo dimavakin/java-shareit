@@ -23,25 +23,26 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         User user = userRepository.findById(requestorId)
                 .orElseThrow(() -> new NotFoundException("userId не найден " + requestorId));
 
-        return ItemRequestMapper.mapToItemRequestDto(itemRequestRepository
-                .save(ItemRequestMapper.mapToItemRequestFromCreateDto(itemRequestCreateDto, user)));
+        return ItemRequestMapper.toItemRequestDto(itemRequestRepository
+                .save(ItemRequestMapper.toItemRequestFromCreateDto(itemRequestCreateDto, user)));
     }
 
     @Override
     public ItemRequestDto findById(Long requestId) {
         return itemRequestRepository.findById(requestId)
-                .map(ItemRequestMapper::mapToItemRequestDto)
+                .map(ItemRequestMapper::toItemRequestDto)
                 .orElseThrow(() -> new NotFoundException(String.format("Запрос вещи с id=%d не найден", requestId)));
     }
 
     @Override
     public List<ItemRequestDto> findByRequestorId(Long requestorId) {
-        User user = userRepository.findById(requestorId)
-                .orElseThrow(() -> new NotFoundException("userId не найден " + requestorId));
+        if (!userRepository.existsById(requestorId)) {
+            throw new NotFoundException("userId не найден " + requestorId);
+        }
 
         return itemRequestRepository.findByRequestorIdOrderByCreatedDesc(requestorId)
                 .stream()
-                .map(ItemRequestMapper::mapToItemRequestDto)
+                .map(ItemRequestMapper::toItemRequestDto)
                 .toList();
     }
 
@@ -49,7 +50,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public List<ItemRequestDto> findAll() {
         return itemRequestRepository.findAll()
                 .stream()
-                .map(ItemRequestMapper::mapToItemRequestDto)
+                .map(ItemRequestMapper::toItemRequestDto)
                 .sorted(Comparator.comparing(ItemRequestDto::getCreated).reversed())
                 .toList();
     }
