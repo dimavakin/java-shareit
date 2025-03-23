@@ -2,7 +2,6 @@ package ru.practicum.shareit.request;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.ItemResponseDto;
 import ru.practicum.shareit.user.User;
