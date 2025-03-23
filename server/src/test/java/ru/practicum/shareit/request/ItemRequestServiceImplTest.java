@@ -1,0 +1,109 @@
+package ru.practicum.shareit.request;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.UserRepository;
+
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class ItemRequestServiceImplTest {
+
+    @Mock
+    private ItemRequestRepository itemRequestRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @InjectMocks
+    private ItemRequestServiceImpl itemRequestService;
+
+    private User requestor;
+    private ItemRequestCreateDto itemRequestCreateDto;
+    private ItemRequestDto itemRequestDto;
+    private ItemRequest itemRequest;
+
+    @BeforeEach
+    void setUp() {
+        requestor = new User(1L, "John Doe", "john.doe@example.com");
+        itemRequestCreateDto = new ItemRequestCreateDto("Need a book", LocalDateTime.now());
+        itemRequestDto = new ItemRequestDto(1L, "Need a book", LocalDateTime.now(), 1L, null);
+        itemRequest = ItemRequestMapper.toItemRequestFromCreateDto(itemRequestCreateDto, requestor);
+        itemRequest.setId(1L);
+        itemRequest.setCreated(itemRequestDto.getCreated());
+    }
+
+    @Test
+    void testCreateItemRequestWhenRequestIsCreatedThenReturnItemRequestDto() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(requestor));
+        when(itemRequestRepository.save(any())).thenReturn(itemRequest);
+        ItemRequestDto result = itemRequestService.createItemRequest(itemRequestCreateDto, 1L);
+        assertThat(result).isEqualTo(itemRequestDto);
+        verify(userRepository, times(1)).findById(1L);
+        verify(itemRequestRepository, times(1)).save(any());
+    }
+
+    @Test
+    void testFindByIdWhenRequestExistsThenReturnItemRequestDto() {
+        when(itemRequestRepository.findById(1L)).thenReturn(Optional.of(itemRequest));
+        ItemRequestDto result = itemRequestService.findById(1L);
+        assertThat(result).isEqualTo(itemRequestDto);
+        verify(itemRequestRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void testFindByIdWhenRequestDoesNotExistThenThrowNotFoundException() {
+        when(itemRequestRepository.findById(1L)).thenReturn(Optional.empty());
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> itemRequestService.findById(1L));
+        assertThat(exception.getMessage()).isEqualTo("Запрос вещи с id=1 не найден");
+        verify(itemRequestRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void testFindByRequestorIdWhenRequestsExistThenReturnItemRequestDtos() {
+        List<ItemRequest> requests = List.of(itemRequest);
+        List<ItemRequestDto> requestDtos = List.of(itemRequestDto);
+
+        when(userRepository.existsById(1L)).thenReturn(true);
+        when(itemRequestRepository.findByRequestorIdOrderByCreatedDesc(1L)).thenReturn(requests);
+
+        List<ItemRequestDto> result = itemRequestService.findByRequestorId(1L);
+
+        assertThat(result).isEqualTo(requestDtos);
+        verify(userRepository, times(1)).existsById(1L);
+        verify(itemRequestRepository, times(1)).findByRequestorIdOrderByCreatedDesc(1L);
+    }
+
+    @Test
+    void testFindAllWhenRequestsExistThenReturnItemRequestDtos() {
+        List<ItemRequest> requests = List.of(itemRequest);
+        List<ItemRequestDto> requestDtos = List.of(itemRequestDto);
+        when(itemRequestRepository.findAll()).thenReturn(requests);
+        List<ItemRequestDto> result = itemRequestService.findAll();
+        assertThat(result).isEqualTo(requestDtos);
+        verify(itemRequestRepository, times(1)).findAll();
+    }
+
+    @Test
+    void testFindByRequestorIdWhenUserNotFoundThenThrowNotFoundException() {
+        when(userRepository.existsById(2L)).thenReturn(false); // Пользователь не найден
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> itemRequestService.findByRequestorId(2L));
+        assertThat(exception.getMessage()).isEqualTo("userId не найден 2");
+        verify(userRepository, times(1)).existsById(2L);
+    }
+
+}
