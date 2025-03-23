@@ -81,7 +81,7 @@ public class ItemRequestServiceImplTest {
         when(itemRequestRepository.findByRequestorIdOrderByCreatedDesc(1L)).thenReturn(requests);
         List<ItemRequestDto> result = itemRequestService.findByRequestorId(1L);
         assertThat(result).isEqualTo(requestDtos);
-        verify(userRepository, times(1)).findById(1L);
+        verify(userRepository, times(1)).existsById(1L);
         verify(itemRequestRepository, times(1)).findByRequestorIdOrderByCreatedDesc(1L);
     }
 
@@ -97,10 +97,10 @@ public class ItemRequestServiceImplTest {
 
     @Test
     void testFindByRequestorIdWhenUserNotFoundThenThrowNotFoundException() {
-        when(userRepository.findById(2L)).thenThrow(new NotFoundException("Пользователь с id = 2 не найден"));
+        when(userRepository.existsById(2L)).thenReturn(false); // Пользователь не найден
         NotFoundException exception = assertThrows(NotFoundException.class, () -> itemRequestService.findByRequestorId(2L));
-        assertThat(exception.getMessage()).isEqualTo("Пользователь с id = 2 не найден");
-        verify(userRepository, times(1)).findById(2L);
+        assertThat(exception.getMessage()).isEqualTo("userId не найден 2");
+        verify(userRepository, times(1)).existsById(2L);
     }
 
 }
